@@ -76,7 +76,8 @@ const CreateDedication = () => {
       // 3. Generación de Link (Dinámico según el entorno)
       if (data) {
         const baseUrl = window.location.origin;
-        const link = `${baseUrl}/love/${data.id}`;
+        // FORMA CORRECTA
+const link = `${window.location.origin}/love/${data.id}`;
         setGeneratedLink(link);
         
         confetti({ 

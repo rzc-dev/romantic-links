@@ -30,13 +30,13 @@ const CreateDedication = () => {
 
   const handleSubmit = async (e) => {
     // 1. Evitamos que la página se recargue
-    e.preventDefault();
+    if (e) e.preventDefault();
     setLoading(true);
 
     try {
       const imageUrls = [];
 
-      // 2. Subida de imágenes (solo si hay archivos)
+      // 2. Subida de imágenes (solo si hay archivos) con nombres únicos
       if (files.length > 0) {
         for (const file of files) {
           const fileExt = file.name.split('.').pop();
@@ -68,14 +68,14 @@ const CreateDedication = () => {
           youtube_url: formData.youtube_url
         }])
         .select()
-        .single(); // Traemos el objeto creado directamente
+        .single();
 
       if (dbError) throw dbError;
 
       if (data) {
-        // Generamos el link final
-        const productionUrl = window.location.origin; // Usa la URL actual (funciona en local y Vercel)
-        const link = `${productionUrl}/love/${data.id}`;
+        // GENERACIÓN DEL LINK: Usamos origin para asegurar que sea dominio.com/love/id
+        const baseUrl = window.location.origin; 
+        const link = `${baseUrl}/love/${data.id}`;
         setGeneratedLink(link);
         
         // Efecto de éxito
@@ -89,25 +89,25 @@ const CreateDedication = () => {
 
     } catch (error) {
       console.error("Error detallado:", error);
-      alert("No se pudo crear la dedicatoria. Verifica que la tabla en Supabase tenga la columna 'youtube_url'. Error: " + error.message);
+      alert("Error: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-love-50 py-12 px-4 flex items-center justify-center font-sans">
+    <div className="min-h-screen bg-love-50 py-12 px-4 flex items-center justify-center font-sans text-slate-900">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-3xl w-full bg-white rounded-[2.5rem] shadow-2xl p-8 md:p-12 relative overflow-hidden border border-love-100"
       >
         <header className="flex items-center gap-4 mb-10">
-          <div className="bg-love-500 p-3 rounded-2xl shadow-lg">
+          <div className="bg-love-500 p-3 rounded-2xl shadow-lg shadow-love-200">
             <Heart className="text-white" fill="currentColor" size={28} />
           </div>
           <div>
-            <h2 className="text-3xl font-romantic text-slate-800 leading-none">Romantic Links</h2>
+            <h2 className="text-3xl font-romantic leading-none">Romantic Links</h2>
             <p className="text-slate-400 text-[10px] mt-1 uppercase font-black tracking-widest">Crea un momento inolvidable</p>
           </div>
         </header>
@@ -116,14 +116,14 @@ const CreateDedication = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input 
               required
-              className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-love-300 outline-none transition-all font-medium"
+              className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-love-300 focus:bg-white outline-none transition-all font-medium"
               placeholder="Tu nombre"
               value={formData.nombre_remitente}
               onChange={(e) => setFormData({...formData, nombre_remitente: e.target.value})}
             />
             <input 
               required
-              className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-love-300 outline-none transition-all font-medium"
+              className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-love-300 focus:bg-white outline-none transition-all font-medium"
               placeholder="Su nombre"
               value={formData.nombre_destinatario}
               onChange={(e) => setFormData({...formData, nombre_destinatario: e.target.value})}
@@ -133,19 +133,19 @@ const CreateDedication = () => {
           <textarea 
             required
             rows="3"
-            className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-love-300 outline-none transition-all resize-none font-medium"
+            className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-love-300 focus:bg-white outline-none transition-all resize-none font-medium"
             placeholder="Escribe tu mensaje aquí..."
             value={formData.mensaje}
             onChange={(e) => setFormData({...formData, mensaje: e.target.value})}
           ></textarea>
 
           <div className="space-y-2">
-            <div className="flex items-center gap-2 ml-1 text-slate-400">
+            <div className="flex items-center gap-2 ml-1 text-love-400">
               <Music size={14} />
               <p className="text-[10px] font-black uppercase tracking-widest">Música de fondo (Link de YouTube)</p>
             </div>
             <input 
-              className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-love-300 outline-none transition-all text-sm font-medium"
+              className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-love-300 focus:bg-white outline-none transition-all text-sm font-medium"
               placeholder="https://www.youtube.com/watch?v=..."
               value={formData.youtube_url}
               onChange={(e) => setFormData({...formData, youtube_url: e.target.value})}
@@ -182,11 +182,12 @@ const CreateDedication = () => {
                 <p className="text-[9px] font-black text-slate-300 uppercase ml-1">Fecha (Opcional)</p>
                 <input 
                   type="date"
+                  value={formData.fecha_especial}
                   className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-love-300 outline-none transition-all text-slate-500 text-sm"
                   onChange={(e) => setFormData({...formData, fecha_especial: e.target.value})}
                 />
             </div>
-            <div className="flex items-center justify-center p-4 rounded-2xl border-2 border-dashed border-love-200 relative hover:bg-love-50 transition-colors cursor-pointer mt-4 md:mt-0">
+            <div className="flex items-center justify-center p-4 rounded-2xl border-2 border-dashed border-love-200 relative group hover:bg-love-50 transition-colors cursor-pointer mt-4 md:mt-0">
                 <Upload size={18} className="text-love-400 mr-2" />
                 <span className="text-xs font-bold text-slate-400">
                     {files.length > 0 ? `${files.length} fotos listas` : "Subir fotos"}
@@ -220,28 +221,28 @@ const CreateDedication = () => {
               </div>
               <h3 className="text-3xl font-romantic text-slate-800 mb-2">¡Sorpresa creada!</h3>
               <p className="text-slate-500 text-sm mb-4">Copia el link y envíaselo por WhatsApp</p>
-              <div className="bg-slate-100 p-4 rounded-xl mb-6 font-mono text-[10px] break-all text-slate-500 border border-slate-200">
+              <div className="bg-slate-100 p-4 rounded-xl mb-6 font-mono text-[10px] break-all text-slate-500 border border-slate-200 select-all">
                 {generatedLink}
               </div>
               <div className="grid gap-2">
                 <button 
                   onClick={() => {
                     navigator.clipboard.writeText(generatedLink);
-                    alert("¡Copiado!");
+                    alert("¡Copiado con éxito!");
                   }}
                   className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2"
                 >
                   <Copy size={16} /> Copiar enlace
                 </button>
                 <a 
-                  href={`https://wa.me/?text=Tengo una sorpresa para ti... mírala aquí: ${generatedLink}`}
+                  href={`https://wa.me/?text=He hecho esto pensando en ti... míralo aquí: ${generatedLink}`}
                   target="_blank" rel="noreferrer"
                   className="w-full bg-[#25D366] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-center"
                 >
                   <Share2 size={16} /> WhatsApp
                 </a>
-                <button onClick={() => setGeneratedLink('')} className="text-[10px] text-slate-300 font-black uppercase mt-4">
-                  Crear otra
+                <button onClick={() => setGeneratedLink('')} className="text-[10px] text-slate-300 font-black uppercase mt-4 hover:text-love-500 transition-colors">
+                  Crear otra dedicatoria
                 </button>
               </div>
             </div>
