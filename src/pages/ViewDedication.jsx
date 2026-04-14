@@ -1,246 +1,243 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, Calendar, Stars, Moon, Flower2, Gift, Snowflake, Music, Pause, Play } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { 
+  Heart, Upload, Send, Loader2, CheckCircle2, 
+  Copy, Share2, Moon, Stars, Flower2, Gift, Music 
+} from 'lucide-react';
 import confetti from 'canvas-confetti';
-import YouTube from 'react-youtube';
 
-// 1. CONFIGURACIÓN DE LOS 5 TEMAS
-const themes = {
-  romantic: {
-    bg: "bg-love-50",
-    card: "bg-white border-love-200",
-    text: "text-slate-800",
-    secondaryText: "text-slate-500",
-    accent: "text-love-500",
-    font: "font-romantic",
-    icon: Heart,
-    confetti: ['#f43f5e', '#ffffff']
-  },
-  midnight: {
-    bg: "bg-midnight-900",
-    card: "bg-midnight-700/50 border-gold-400/30 backdrop-blur-md",
-    text: "text-white",
-    secondaryText: "text-slate-400",
-    accent: "text-gold-400",
-    font: "font-serif",
-    icon: Moon,
-    confetti: ['#fbbf24', '#ffffff']
-  },
-  sunset: {
-    bg: "bg-gradient-to-br from-orange-400 via-rose-400 to-purple-500 animate-gradient-slow",
-    card: "bg-white/70 border-white/30 backdrop-blur-sm",
-    text: "text-orange-950",
-    secondaryText: "text-rose-900/70",
-    accent: "text-purple-700",
-    font: "font-sans",
-    icon: Stars,
-    confetti: ['#f97316', '#e11d48', '#a855f7']
-  },
-  flowers: {
-    bg: "bg-sunflower-100",
-    card: "bg-white border-sunflower-200 shadow-xl border-t-8 border-t-sunflower-400",
-    text: "text-sunflower-700",
-    secondaryText: "text-sunflower-500",
-    accent: "text-sunflower-500",
-    font: "font-romantic",
-    icon: Flower2,
-    confetti: ['#facc15', '#fefce8', '#eab308']
-  },
-  christmas: {
-    bg: "bg-xmas-100",
-    card: "bg-white border-xmas-600 shadow-xmas",
-    text: "text-xmas-700",
-    secondaryText: "text-slate-500",
-    accent: "text-xmas-600",
-    font: "font-xmas",
-    icon: Gift,
-    confetti: ['#16a34a', '#ffffff', '#ef4444']
-  }
-};
+const CreateDedication = () => {
+  const [loading, setLoading] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState('');
+  const [files, setFiles] = useState([]);
+  const [formData, setFormData] = useState({
+    nombre_remitente: '',
+    nombre_destinatario: '',
+    mensaje: '',
+    fecha_especial: '',
+    tema: 'romantic',
+    youtube_url: '' // Campo para la música
+  });
 
-const ViewDedication = () => {
-  const { id } = useParams();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [player, setPlayer] = useState(null);
+  const themeOptions = [
+    { id: 'romantic', label: 'San Valentín', icon: Heart, desc: 'Clásico Rosa' },
+    { id: 'midnight', label: 'Elegante', icon: Moon, desc: 'Noche y Oro' },
+    { id: 'sunset', label: 'Aniversario', icon: Stars, desc: 'Cálido Gradiente' },
+    { id: 'flowers', label: 'Flores Amarillas', icon: Flower2, desc: 'Alegre y Brillante' },
+    { id: 'christmas', label: 'Navidad', icon: Gift, desc: 'Festivo Mágico' },
+  ];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data, error } = await supabase
-        .from('dedicatorias')
-        .select('*')
-        .eq('id', id)
-        .single();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-      if (data) {
-        setData(data);
-        const currentTheme = themes[data.tema] || themes.romantic;
-        
-        if (data.tema === 'christmas') {
-          const duration = 10 * 1000;
-          const animationEnd = Date.now() + duration;
-          const interval = setInterval(() => {
-            const timeLeft = animationEnd - Date.now();
-            if (timeLeft <= 0) return clearInterval(interval);
-            confetti({ 
-              particleCount: 1, startVelocity: 0, ticks: 200, 
-              origin: { x: Math.random(), y: Math.random() - 0.2 }, 
-              colors: ['#ffffff'], shapes: ['circle'], gravity: 0.3, scalar: 0.8
-            });
-          }, 50);
-        } 
-        else if (data.tema === 'flowers') {
-          const end = Date.now() + (7 * 1000);
-          (function frame() {
-            confetti({ particleCount: 2, angle: 60, spread: 55, origin: { x: 0 }, colors: currentTheme.confetti });
-            confetti({ particleCount: 2, angle: 120, spread: 55, origin: { x: 1 }, colors: currentTheme.confetti });
-            if (Date.now() < end) requestAnimationFrame(frame);
-          }());
-        } 
-        else {
-          confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: currentTheme.confetti });
-        }
+    try {
+      const imageUrls = [];
+
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('fotos-amor')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('fotos-amor')
+          .getPublicUrl(fileName);
+
+        imageUrls.push(publicUrl);
       }
+
+      const { data, error: dbError } = await supabase
+        .from('dedicatorias')
+        .insert([{
+          nombre_remitente: formData.nombre_remitente,
+          nombre_destinatario: formData.nombre_destinatario,
+          mensaje: formData.mensaje,
+          fecha_especial: formData.fecha_especial || null,
+          imagenes: imageUrls,
+          tema: formData.tema,
+          youtube_url: formData.youtube_url // Guardamos el link de música
+        }])
+        .select();
+
+      if (dbError) throw dbError;
+
+      if (data && data[0]) {
+        const productionUrl = 'https://romantic-links-rzc-dev.vercel.app';
+        const link = `${productionUrl}/love/${data[0].id}`;
+        setGeneratedLink(link);
+        
+        confetti({ 
+            particleCount: 150, 
+            spread: 70, 
+            origin: { y: 0.6 },
+            colors: ['#f43f5e', '#fbbf24', '#ffffff']
+        });
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("Error al crear: " + error.message);
+    } finally {
       setLoading(false);
-    };
-    fetchData();
-  }, [id]);
-
-  // Función para extraer ID de YouTube
-  const getVideoId = (url) => {
-    if (!url) return null;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
-  };
-
-  const togglePlay = () => {
-    if (!player) return;
-    if (isPlaying) {
-      player.pauseVideo();
-    } else {
-      player.playVideo();
     }
-    setIsPlaying(!isPlaying);
   };
-
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-white font-romantic text-2xl text-love-500">
-      <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1.5 }}>
-        Cargando tu sorpresa...
-      </motion.div>
-    </div>
-  );
-
-  if (!data) return <div className="min-h-screen flex items-center justify-center text-slate-400 italic font-sans">Dedicatoria no encontrada.</div>;
-
-  const currentTheme = themes[data.tema] || themes.romantic;
-  const ThemeIcon = currentTheme.icon;
-  const videoId = getVideoId(data.youtube_url);
 
   return (
-    <div className={`min-h-screen ${currentTheme.bg} py-12 px-4 transition-all duration-1000 flex flex-col items-center overflow-hidden relative`}>
-      
-      {/* Reproductor de YouTube Invisible */}
-      {videoId && (
-        <div className="hidden">
-          <YouTube 
-            videoId={videoId} 
-            opts={{ height: '0', width: '0', playerVars: { autoplay: 0 } }} 
-            onReady={(e) => setPlayer(e.target)}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-          />
-        </div>
-      )}
-
-      {/* Botón Flotante de Música */}
-      {videoId && (
-        <motion.button
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          onClick={togglePlay}
-          className={`fixed bottom-8 right-8 z-50 p-4 rounded-full shadow-2xl flex items-center justify-center gap-2 border transition-all ${
-            isPlaying ? 'bg-white text-love-500 border-love-100' : 'bg-love-500 text-white border-transparent'
-          }`}
-        >
-          {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
-          <span className="text-[10px] font-black uppercase tracking-tighter pr-1">
-            {isPlaying ? "Pausar" : "Reproducir Música"}
-          </span>
-        </motion.button>
-      )}
-
-      {/* Decoración extra */}
-      {data.tema === 'christmas' && <Snowflake className="absolute top-5 right-5 text-white/40 animate-spin-slow" size={80} />}
-      {data.tema === 'flowers' && <Flower2 className="absolute -bottom-10 -left-10 text-sunflower-500/20" size={200} />}
-
-      {/* Cabecera */}
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12 z-10">
-        <ThemeIcon className={`mx-auto ${currentTheme.accent} mb-4 animate-pulse`} size={64} fill="currentColor" />
-        <h1 className={`text-5xl md:text-7xl ${currentTheme.font} ${currentTheme.text} mb-2 px-2`}>
-          Para: {data.nombre_destinatario}
-        </h1>
-        <p className={`${currentTheme.secondaryText} text-lg font-medium tracking-widest italic`}>
-          De: {data.nombre_remitente}
-        </p>
-      </motion.div>
-
-      {/* Fotos Estilo Polaroid */}
-      {data.imagenes?.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-8 mb-16 max-w-6xl z-10 px-4">
-          {data.imagenes.map((url, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, scale: 0.8, rotate: index % 2 === 0 ? -5 : 5 }}
-              whileInView={{ opacity: 1, scale: 1, rotate: index % 2 === 0 ? -2 : 2 }}
-              viewport={{ once: true }}
-              whileHover={{ scale: 1.05, rotate: 0, zIndex: 20 }}
-              className="bg-white p-3 pb-12 shadow-2xl rounded-sm border border-slate-100 transition-all cursor-pointer"
-            >
-              <img src={url} className="w-64 h-64 object-cover" alt="Recuerdo" loading="lazy" />
-            </motion.div>
-          ))}
-        </div>
-      )}
-
-      {/* Mensaje Principal */}
+    <div className="min-h-screen bg-love-50 py-12 px-4 flex items-center justify-center font-sans">
       <motion.div 
-        initial={{ y: 50, opacity: 0 }} 
-        whileInView={{ y: 0, opacity: 1 }} 
-        viewport={{ once: true }}
-        className={`max-w-3xl w-full ${currentTheme.card} p-10 md:p-16 rounded-[2.5rem] shadow-2xl text-center mb-12 border-b-8 z-10 mx-auto`}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-3xl w-full bg-white rounded-[2.5rem] shadow-2xl p-8 md:p-12 relative overflow-hidden border border-love-100"
       >
-        <p className={`text-2xl md:text-4xl ${currentTheme.text} ${currentTheme.font} leading-relaxed`}>
-          "{data.mensaje}"
-        </p>
-      </motion.div>
-
-      {/* Fecha Especial */}
-      {data.fecha_especial && (
-        <motion.div 
-          initial={{ opacity: 0 }} 
-          whileInView={{ opacity: 1 }} 
-          className="flex items-center gap-4 px-8 py-4 rounded-full bg-white/60 backdrop-blur-md shadow-lg z-10 border border-white/40"
-        >
-          <Calendar className={currentTheme.accent} size={24} />
-          <div className="text-left">
-            <p className="text-[10px] uppercase font-black text-slate-400 tracking-tighter">Nuestra fecha especial</p>
-            <p className={`text-xl ${currentTheme.font} ${currentTheme.text}`}>
-              {new Date(data.fecha_especial).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </p>
+        <div className="flex items-center gap-4 mb-10">
+          <div className="bg-love-500 p-3 rounded-2xl shadow-lg shadow-love-200">
+            <Heart className="text-white" fill="currentColor" size={28} />
           </div>
-        </motion.div>
-      )}
+          <div>
+            <h2 className="text-3xl font-romantic text-slate-800 leading-none">Romantic Links</h2>
+            <p className="text-slate-400 text-[10px] mt-1 uppercase font-black tracking-widest">Personaliza tu sorpresa</p>
+          </div>
+        </div>
 
-      <footer className={`mt-24 opacity-40 text-[10px] uppercase tracking-[0.4em] ${currentTheme.text} font-bold`}>
-        RomanticLinks &bull; {new Date().getFullYear()}
-      </footer>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input 
+              required
+              className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-love-300 focus:bg-white outline-none transition-all font-medium text-slate-700"
+              placeholder="Tu nombre"
+              onChange={(e) => setFormData({...formData, nombre_remitente: e.target.value})}
+            />
+            <input 
+              required
+              className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-love-300 focus:bg-white outline-none transition-all font-medium text-slate-700"
+              placeholder="Su nombre"
+              onChange={(e) => setFormData({...formData, nombre_destinatario: e.target.value})}
+            />
+          </div>
+
+          <textarea 
+            required
+            rows="3"
+            className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-love-300 focus:bg-white outline-none transition-all resize-none font-medium text-slate-700"
+            placeholder="Escribe un mensaje que llegue al alma..."
+            onChange={(e) => setFormData({...formData, mensaje: e.target.value})}
+          ></textarea>
+
+          {/* AQUÍ ESTÁ EL CAMPO QUE BUSCABAS */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 ml-1">
+              <Music size={14} className="text-love-400" />
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Música de fondo (YouTube)</p>
+            </div>
+            <input 
+              className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-love-300 focus:bg-white outline-none transition-all text-sm font-medium text-slate-600"
+              placeholder="Pega el link de la canción aquí..."
+              onChange={(e) => setFormData({...formData, youtube_url: e.target.value})}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Ambiente de la sorpresa</p>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              {themeOptions.map((theme) => {
+                const Icon = theme.icon;
+                const isSelected = formData.tema === theme.id;
+                return (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => setFormData({...formData, tema: theme.id})}
+                    className={`flex flex-col items-center p-3 rounded-2xl border-2 transition-all ${
+                      isSelected 
+                        ? 'border-love-500 bg-love-50 text-love-600 shadow-sm' 
+                        : 'border-slate-50 bg-slate-50 text-slate-400 hover:border-love-100'
+                    }`}
+                  >
+                    <Icon size={20} className="mb-1" />
+                    <span className="text-[9px] font-black uppercase">{theme.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+                <p className="text-[9px] font-black text-slate-300 uppercase ml-1">Fecha especial</p>
+                <input 
+                type="date"
+                className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-love-300 outline-none transition-all text-slate-500 text-sm"
+                onChange={(e) => setFormData({...formData, fecha_especial: e.target.value})}
+                />
+            </div>
+            <div className="flex items-center justify-center p-4 rounded-2xl border-2 border-dashed border-love-200 relative group hover:bg-love-50 transition-colors cursor-pointer mt-4 md:mt-0">
+                <Upload size={18} className="text-love-400 mr-2" />
+                <span className="text-xs font-bold text-slate-400">
+                    {files.length > 0 ? `${files.length} fotos listas` : "Subir recuerdos"}
+                </span>
+                <input 
+                    type="file" multiple accept="image/*"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={(e) => setFiles(Array.from(e.target.files).slice(0, 5))}
+                />
+            </div>
+          </div>
+
+          <button 
+            type="submit"
+            disabled={loading}
+            className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-xl hover:shadow-love-200 hover:bg-slate-800 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="animate-spin" /> : <><Send size={18} /> Crear Momento Mágico</>}
+          </button>
+        </form>
+
+        {generatedLink && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 bg-white/95 backdrop-blur-sm flex items-center justify-center p-6 z-50"
+          >
+            <div className="text-center w-full max-w-sm">
+              <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 size={32} />
+              </div>
+              <h3 className="text-3xl font-romantic text-slate-800 mb-2">¡Listo para enviar!</h3>
+              <div className="bg-slate-100 p-4 rounded-xl mb-6 font-mono text-[10px] break-all text-slate-500 border border-slate-200 select-all">
+                {generatedLink}
+              </div>
+              <div className="grid gap-2">
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(generatedLink);
+                    alert("Copiado con éxito");
+                  }}
+                  className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+                >
+                  <Copy size={16} /> Copiar enlace
+                </button>
+                <a 
+                  href={`https://wa.me/?text=He hecho esto pensando en ti... míralo aquí: ${generatedLink}`}
+                  target="_blank" rel="noreferrer"
+                  className="w-full bg-[#25D366] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+                >
+                  <Share2 size={16} /> Enviar por WhatsApp
+                </a>
+                <button onClick={() => setGeneratedLink('')} className="text-[10px] text-slate-300 font-black uppercase mt-4">
+                  Crear otra sorpresa
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </motion.div>
     </div>
   );
 };
 
-export default ViewDedication;
+export default CreateDedication;
