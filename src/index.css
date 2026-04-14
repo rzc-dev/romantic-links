@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+/* 1. IMPORTACIÓN DE FUENTES */
+/* Dancing Script: Romántico | Inter: General | Mountains of Christmas: Navidad */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@400;600&family=Mountains+of+Christmas:wght@700&display=swap');
+
+/* 2. DEFINICIÓN DEL TEMA (Tailwind v4) */
+@theme {
+  /* Tema Romántico / General */
+  --color-love-50: #fff1f2;
+  --color-love-100: #ffe4e6;
+  --color-love-200: #fecdd3;
+  --color-love-300: #fda4af;
+  --color-love-400: #fb7185;
+  --color-love-500: #f43f5e;
+  --color-love-600: #e11d48;
+
+  /* Tema Midnight (Elegante) */
+  --color-midnight-900: #0f172a;
+  --color-midnight-700: #334155;
+  --color-gold-400: #fbbf24;
+
+  /* Tema Flores Amarillas */
+  --color-sunflower-100: #fefce8;
+  --color-sunflower-200: #fef08a;
+  --color-sunflower-500: #eab308;
+  --color-sunflower-700: #a16207;
+
+  /* Tema Navidad */
+  --color-xmas-100: #f0fdf4;
+  --color-xmas-600: #16a34a;
+  --color-xmas-700: #15803d;
+
+  /* Tipografías Personalizadas */
+  --font-romantic: "Dancing Script", cursive;
+  --font-xmas: "Mountains of Christmas", serif;
+}
+
+/* 3. CAPAS BASE Y UTILIDADES */
+@layer base {
+  body {
+    /* Por defecto usamos el fondo romántico y la fuente sans */
+    @apply bg-love-50 text-slate-800 font-sans antialiased transition-colors duration-500;
+  }
+
+  /* Clases de utilidad para las fuentes */
+  .font-romantic {
+    font-family: var(--font-romantic);
+  }
+
+  .font-xmas {
+    font-family: var(--font-xmas);
+  }
+}
+
+/* 4. ANIMACIONES EXTRA */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 10s linear infinite;
+}
+
+/* Sombra dorada especial para Navidad */
+.shadow-xmas {
+  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.4);
+}
