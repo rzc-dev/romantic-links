@@ -68,7 +68,7 @@ const CreateDedication = () => {
 
       // 3. Éxito y Confeti
       if (data && data[0]) {
-        const link = `${window.location.origin}/love/${data[0].id}`;
+        const link = `https://romantic-links-rzc-dev.vercel.app/love/${data[0].id}`;
         setGeneratedLink(link);
         
         const colors = formData.tema === 'midnight' ? ['#fbbf24', '#ffffff'] : ['#f43f5e', '#ffffff'];
