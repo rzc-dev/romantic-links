@@ -14,7 +14,8 @@ const themes = {
     secondaryText: "text-slate-500",
     accent: "text-love-500",
     font: "font-romantic",
-    icon: Heart
+    icon: Heart,
+    confetti: ['#f43f5e', '#ffffff']
   },
   midnight: {
     bg: "bg-midnight-900",
@@ -23,25 +24,28 @@ const themes = {
     secondaryText: "text-slate-400",
     accent: "text-gold-400",
     font: "font-serif",
-    icon: Moon
+    icon: Moon,
+    confetti: ['#fbbf24', '#ffffff']
   },
   sunset: {
-    bg: "bg-gradient-to-br from-orange-400 via-rose-400 to-purple-500",
+    bg: "bg-gradient-to-br from-orange-400 via-rose-400 to-purple-500 animate-gradient-slow",
     card: "bg-white/70 border-white/30 backdrop-blur-sm",
     text: "text-orange-950",
     secondaryText: "text-rose-900/70",
     accent: "text-purple-700",
     font: "font-sans",
-    icon: Stars
+    icon: Stars,
+    confetti: ['#f97316', '#e11d48', '#a855f7']
   },
   flowers: {
     bg: "bg-sunflower-100",
-    card: "bg-white border-sunflower-200 shadow-xl",
+    card: "bg-white border-sunflower-200 shadow-xl border-t-8 border-t-sunflower-400",
     text: "text-sunflower-700",
     secondaryText: "text-sunflower-500",
     accent: "text-sunflower-500",
     font: "font-romantic",
-    icon: Flower2
+    icon: Flower2,
+    confetti: ['#facc15', '#fefce8', '#eab308']
   },
   christmas: {
     bg: "bg-xmas-100",
@@ -50,7 +54,8 @@ const themes = {
     secondaryText: "text-slate-500",
     accent: "text-xmas-600",
     font: "font-xmas",
-    icon: Gift
+    icon: Gift,
+    confetti: ['#16a34a', '#ffffff', '#ef4444']
   }
 };
 
@@ -69,20 +74,42 @@ const ViewDedication = () => {
 
       if (data) {
         setData(data);
+        const currentTheme = themes[data.tema] || themes.romantic;
         
-        // Efecto especial según el tema
+        // --- LÓGICA DE EFECTOS ESPECIALES ---
         if (data.tema === 'christmas') {
-            // Efecto de nieve para Navidad
-            const duration = 5 * 1000;
-            const animationEnd = Date.now() + duration;
-            const interval = setInterval(function() {
-                const timeLeft = animationEnd - Date.now();
-                if (timeLeft <= 0) return clearInterval(interval);
-                confetti({ particleCount: 40, startVelocity: 0, ticks: 200, origin: { x: Math.random(), y: Math.random() - 0.2 }, colors: ['#ffffff'], shapes: ['circle'], gravity: 0.5 });
-            }, 250);
-        } else {
-            // Confeti normal
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+          const duration = 10 * 1000;
+          const animationEnd = Date.now() + duration;
+          const interval = setInterval(() => {
+            const timeLeft = animationEnd - Date.now();
+            if (timeLeft <= 0) return clearInterval(interval);
+            confetti({ 
+              particleCount: 1, 
+              startVelocity: 0, 
+              ticks: 200, 
+              origin: { x: Math.random(), y: Math.random() - 0.2 }, 
+              colors: ['#ffffff'], 
+              shapes: ['circle'], 
+              gravity: 0.3,
+              scalar: 0.8
+            });
+          }, 50);
+        } 
+        else if (data.tema === 'flowers') {
+          const end = Date.now() + (7 * 1000);
+          (function frame() {
+            confetti({ particleCount: 2, angle: 60, spread: 55, origin: { x: 0 }, colors: currentTheme.confetti });
+            confetti({ particleCount: 2, angle: 120, spread: 55, origin: { x: 1 }, colors: currentTheme.confetti });
+            if (Date.now() < end) requestAnimationFrame(frame);
+          }());
+        } 
+        else {
+          confetti({ 
+            particleCount: 150, 
+            spread: 70, 
+            origin: { y: 0.6 }, 
+            colors: currentTheme.confetti 
+          });
         }
       }
       setLoading(false);
@@ -91,14 +118,14 @@ const ViewDedication = () => {
   }, [id]);
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
-        <Heart className="text-love-500" size={40} />
+    <div className="min-h-screen flex items-center justify-center bg-white font-romantic text-2xl text-love-500">
+      <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1.5 }}>
+        Cargando tu sorpresa...
       </motion.div>
     </div>
   );
 
-  if (!data) return <div className="min-h-screen flex items-center justify-center">No se encontró la dedicatoria.</div>;
+  if (!data) return <div className="min-h-screen flex items-center justify-center text-slate-400 italic font-sans">Dedicatoria no encontrada.</div>;
 
   const currentTheme = themes[data.tema] || themes.romantic;
   const ThemeIcon = currentTheme.icon;
@@ -106,8 +133,9 @@ const ViewDedication = () => {
   return (
     <div className={`min-h-screen ${currentTheme.bg} py-12 px-4 transition-all duration-1000 flex flex-col items-center overflow-hidden relative`}>
       
-      {/* Decoración extra para Navidad */}
+      {/* Elemento decorativo extra */}
       {data.tema === 'christmas' && <Snowflake className="absolute top-5 right-5 text-white/40 animate-spin-slow" size={80} />}
+      {data.tema === 'flowers' && <Flower2 className="absolute -bottom-10 -left-10 text-sunflower-500/20" size={200} />}
 
       {/* Cabecera */}
       <motion.div 
@@ -116,7 +144,7 @@ const ViewDedication = () => {
         className="text-center mb-12 z-10"
       >
         <ThemeIcon className={`mx-auto ${currentTheme.accent} mb-4 animate-pulse`} size={64} fill="currentColor" />
-        <h1 className={`text-5xl md:text-7xl ${currentTheme.font} ${currentTheme.text} mb-2`}>
+        <h1 className={`text-5xl md:text-7xl ${currentTheme.font} ${currentTheme.text} mb-2 px-2`}>
           Para: {data.nombre_destinatario}
         </h1>
         <p className={`${currentTheme.secondaryText} text-lg font-medium tracking-widest italic`}>
@@ -126,29 +154,30 @@ const ViewDedication = () => {
 
       {/* Fotos Estilo Polaroid */}
       {data.imagenes?.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-6 mb-16 max-w-6xl z-10 px-4">
+        <div className="flex flex-wrap justify-center gap-8 mb-16 max-w-6xl z-10 px-4">
           {data.imagenes.map((url, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, scale: 0.8, rotate: index % 2 === 0 ? -3 : 3 }}
+              initial={{ opacity: 0, scale: 0.8, rotate: index % 2 === 0 ? -5 : 5 }}
               whileInView={{ opacity: 1, scale: 1, rotate: index % 2 === 0 ? -2 : 2 }}
               viewport={{ once: true }}
-              className="bg-white p-3 pb-12 shadow-2xl rounded-sm border border-slate-100"
+              whileHover={{ scale: 1.05, rotate: 0, zIndex: 20 }}
+              className="bg-white p-3 pb-12 shadow-2xl rounded-sm border border-slate-100 transition-all cursor-pointer"
             >
-              <img src={url} className="w-64 h-64 object-cover" alt="Recuerdo" />
+              <img src={url} className="w-64 h-64 object-cover" alt="Recuerdo" loading="lazy" />
             </motion.div>
           ))}
         </div>
       )}
 
-      {/* Mensaje */}
+      {/* Mensaje Principal */}
       <motion.div 
         initial={{ y: 50, opacity: 0 }} 
         whileInView={{ y: 0, opacity: 1 }} 
         viewport={{ once: true }}
-        className={`max-w-3xl w-full ${currentTheme.card} p-10 md:p-16 rounded-[2rem] shadow-2xl text-center mb-12 border-b-8 z-10`}
+        className={`max-w-3xl w-full ${currentTheme.card} p-10 md:p-16 rounded-[2.5rem] shadow-2xl text-center mb-12 border-b-8 z-10 mx-auto`}
       >
-        <p className={`text-2xl md:text-3xl ${currentTheme.text} ${currentTheme.font} leading-relaxed`}>
+        <p className={`text-2xl md:text-4xl ${currentTheme.text} ${currentTheme.font} leading-relaxed`}>
           "{data.mensaje}"
         </p>
       </motion.div>
@@ -158,11 +187,11 @@ const ViewDedication = () => {
         <motion.div 
           initial={{ opacity: 0 }} 
           whileInView={{ opacity: 1 }} 
-          className={`flex items-center gap-4 px-8 py-4 rounded-full bg-white/50 backdrop-blur-md shadow-lg z-10`}
+          className="flex items-center gap-4 px-8 py-4 rounded-full bg-white/60 backdrop-blur-md shadow-lg z-10 border border-white/40"
         >
-          <Calendar className={currentTheme.accent} />
+          <Calendar className={currentTheme.accent} size={24} />
           <div className="text-left">
-            <p className="text-[10px] uppercase font-black text-slate-400">Nuestra fecha</p>
+            <p className="text-[10px] uppercase font-black text-slate-400 tracking-tighter">Nuestra fecha especial</p>
             <p className={`text-xl ${currentTheme.font} ${currentTheme.text}`}>
               {new Date(data.fecha_especial).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
@@ -170,8 +199,8 @@ const ViewDedication = () => {
         </motion.div>
       )}
 
-      <footer className={`mt-20 opacity-40 text-[10px] uppercase tracking-[0.3em] ${currentTheme.text}`}>
-        Hecho con amor • RomanticLinks {new Date().getFullYear()}
+      <footer className={`mt-24 opacity-40 text-[10px] uppercase tracking-[0.4em] ${currentTheme.text} font-bold`}>
+        RomanticLinks &bull; {new Date().getFullYear()}
       </footer>
     </div>
   );

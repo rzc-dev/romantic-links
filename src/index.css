@@ -23,6 +23,7 @@
   /* Tema Flores Amarillas */
   --color-sunflower-100: #fefce8;
   --color-sunflower-200: #fef08a;
+  --color-sunflower-400: #facc15;
   --color-sunflower-500: #eab308;
   --color-sunflower-700: #a16207;
 
@@ -34,6 +35,20 @@
   /* Tipografías Personalizadas */
   --font-romantic: "Dancing Script", cursive;
   --font-xmas: "Mountains of Christmas", serif;
+
+  /* Animación para el Sunset */
+  --animate-gradient-slow: gradientMove 8s ease infinite;
+
+  @keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
 }
 
 /* 3. CAPAS BASE Y UTILIDADES */
@@ -53,17 +68,18 @@
   }
 }
 
-/* 4. ANIMACIONES EXTRA */
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
+@layer utilities {
+  .animate-spin-slow {
+    animation: spin-slow 10s linear infinite;
+  }
 
-.animate-spin-slow {
-  animation: spin-slow 10s linear infinite;
-}
+  .animate-gradient-slow {
+    background-size: 200% 200%;
+    animation: var(--animate-gradient-slow);
+  }
 
-/* Sombra dorada especial para Navidad */
-.shadow-xmas {
-  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.4);
+  /* Sombra dorada especial para Navidad */
+  .shadow-xmas {
+    box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.4);
+  }
 }
